@@ -27,7 +27,8 @@ public sealed class MedulaPrecheckParityTests
         var mismatches = new List<string>();
         for (var i = 0; i < ours.Count; i++)
         {
-            if (!JsonNode.DeepEquals(ours[i], theirs[i]))
+            // Compared as text, not with JsonNode.DeepEquals: 120.00 and 120.0 are equal numbers but different reports.
+            if (ours[i]!.ToJsonString() != theirs[i]!.ToJsonString())
             {
                 mismatches.Add($"{theirs[i]!["invoiceNo"]}:\n  medula-precheck: {theirs[i]!.ToJsonString()}\n  sut-rules:       {ours[i]!.ToJsonString()}");
             }

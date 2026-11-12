@@ -1,0 +1,21 @@
+rule "PRC-001" {
+  category pricing
+  title tr "Birim fiyat tarifeden farklı"
+        en "Unit price differs from the tariff"
+  basis "SUT annex point/price lists, valid on the version date"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    # The tariff comes from the SUT version valid on the invoice date, so a 2025 price on a 2026 invoice is caught.
+    let p = procedure(line.code)
+    when p != null and line.unit_price != p.price
+      report expected money(p.price) actual money(line.unit_price)
+  }
+
+  reason tr "Satır {line} ({code}) birim fiyatı {actual} TL, geçerli tarife {expected} TL."
+         en "Line {line} ({code}) is priced {actual} TRY; the tariff in force is {expected} TRY."
+  fix SetUnitPrice value expected
+    tr "Birim fiyatı {expected} TL olarak düzeltin."
+    en "Set the unit price to {expected} TRY."
+}

@@ -1,0 +1,20 @@
+rule "PKG-002" {
+  category package
+  title tr "Birlikte faturalandırılamayan işlemler"
+        en "Codes that cannot be billed together"
+  basis "Combined-billing prohibitions in annex notes"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let primary = min(pair in sut.incompatible_pairs where pair.secondary == line.code and any(o in lines: o.code == pair.primary and o.date == line.date): pair.primary)
+    when primary != null
+      report expected primary
+  }
+
+  reason tr "Satır {line} ({code}), aynı gün {expected} ile birlikte faturalandırılamaz."
+         en "Line {line} ({code}) cannot be billed on the same day as {expected}."
+  fix RemoveLine
+    tr "Satır {line}'i çıkarın; {expected} işlemi bu hizmeti kapsar."
+    en "Remove line {line}; {expected} already covers it."
+}

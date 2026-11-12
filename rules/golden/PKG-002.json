@@ -1,0 +1,38 @@
+{
+  "rule": "PKG-002",
+  "cases": [
+    { "name": "no incompatible pair", "expect": [] },
+    {
+      "name": "sedation on the day of general anaesthesia",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "903003", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 980.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903002", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 420.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 2, "severity": "Error", "expected": "903003", "actual": null,
+                    "reasonEn": "Line 2 (903002) cannot be billed on the same day as 903003." } ]
+    },
+    {
+      "name": "on different days they may both be billed",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "903003", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 980.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903002", "serviceDate": "2025-03-11", "quantity": 1, "unitPrice": 420.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "ECG with a stress test is fine in 2025",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "903010", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 480.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903009", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "and absorbed by the stress test from 2026",
+      "patch": {
+        "invoiceDate": "2026-03-20",
+        "provision": { "admissionDate": "2026-03-10" },
+        "lines": [
+          { "lineNo": 1, "sutCode": "903010", "serviceDate": "2026-03-10", "quantity": 1, "unitPrice": 480.00, "doctorRegistrationNo": "100001" },
+          { "lineNo": 2, "sutCode": "903009", "serviceDate": "2026-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 2, "severity": "Error", "expected": "903010", "actual": null } ]
+    }
+  ]
+}

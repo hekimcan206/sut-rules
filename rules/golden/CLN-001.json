@@ -1,0 +1,26 @@
+{
+  "rule": "CLN-001",
+  "cases": [
+    { "name": "no indication-bound service", "expect": [] },
+    {
+      "name": "HbA1c without a diabetes diagnosis",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "901002", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 64.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "E10, E11, E13, O24, R73", "actual": null, "fixValue": "E10, E11, E13, O24, R73",
+                    "reasonEn": "Line 1 (901002) cannot be billed without one of these diagnoses: E10, E11, E13, O24, R73." } ]
+    },
+    {
+      "name": "HbA1c with a secondary type 2 diabetes diagnosis",
+      "patch": {
+        "diagnoses": [ { "icdCode": "J18.9", "isPrimary": true }, { "icdCode": "E11.9", "isPrimary": false } ],
+        "lines": [ { "lineNo": 1, "sutCode": "901002", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 64.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "a one-letter prefix covers the whole chapter",
+      "patch": {
+        "diagnoses": [ { "icdCode": "O80", "isPrimary": true } ],
+        "lines": [ { "lineNo": 1, "sutCode": "903006", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 6400.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    }
+  ]
+}

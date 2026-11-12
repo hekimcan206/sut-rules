@@ -1,0 +1,32 @@
+{
+  "rule": "DEM-003",
+  "cases": [
+    { "name": "sex-neutral diagnosis", "expect": [] },
+    {
+      "name": "pregnancy chapter for a male patient",
+      "patch": { "patient": { "gender": "Male" }, "diagnoses": [ { "icdCode": "O80", "isPrimary": true } ] },
+      "expect": [ { "line": null, "severity": "Error", "expected": "Female", "actual": "O80",
+                    "reasonEn": "Diagnosis O80 can only be used for Female patients." } ]
+    },
+    {
+      "name": "range end O9A is inclusive",
+      "patch": { "patient": { "gender": "Male" }, "diagnoses": [ { "icdCode": "O9A.1", "isPrimary": true } ] },
+      "expect": [ { "line": null, "severity": "Error", "expected": "Female", "actual": "O9A.1" } ]
+    },
+    {
+      "name": "prostate hyperplasia for a female patient",
+      "patch": { "diagnoses": [ { "icdCode": "J18.9", "isPrimary": true }, { "icdCode": "N40.1", "isPrimary": false } ] },
+      "expect": [ { "line": null, "severity": "Error", "expected": "Male", "actual": "N40.1" } ]
+    },
+    {
+      "name": "pregnancy chapter for a female patient",
+      "patch": { "diagnoses": [ { "icdCode": "O80", "isPrimary": true } ] },
+      "expect": []
+    },
+    {
+      "name": "N39 is just outside the male range",
+      "patch": { "diagnoses": [ { "icdCode": "N39.0", "isPrimary": true } ] },
+      "expect": []
+    }
+  ]
+}

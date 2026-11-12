@@ -1,0 +1,18 @@
+{
+  "rule": "MDL-006",
+  "cases": [
+    { "name": "physicians listed on the invoice", "expect": [] },
+    {
+      "name": "registration not on the invoice",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903009", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100009" } ] },
+      "expect": [ { "line": 2, "severity": "Error", "expected": "\\d{6}", "actual": "100009", "fixValue": "\\d{6}" } ]
+    },
+    {
+      "name": "malformed registration",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "AB12" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "\\d{6}", "actual": "AB12" } ]
+    }
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "rule": "MDL-002",
+  "cases": [
+    { "name": "services on the admission day", "expect": [] },
+    {
+      "name": "service before admission on an open provision",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-09", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903009", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "2025-03-10..", "actual": "2025-03-09", "code": "902001" } ]
+    },
+    {
+      "name": "service after discharge",
+      "patch": {
+        "provision": { "treatmentType": "Inpatient", "dischargeDate": "2025-03-12" },
+        "lines": [
+          { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+          { "lineNo": 2, "sutCode": "903009", "serviceDate": "2025-03-13", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 2, "severity": "Error", "expected": "2025-03-10..2025-03-12", "actual": "2025-03-13",
+                    "reasonEn": "Line 2 (903009) is dated 2025-03-13, outside the provision period 2025-03-10..2025-03-12." } ]
+    },
+    {
+      "name": "discharge day itself is inside the period",
+      "patch": {
+        "provision": { "treatmentType": "Inpatient", "dischargeDate": "2025-03-12" },
+        "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-12", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    }
+  ]
+}

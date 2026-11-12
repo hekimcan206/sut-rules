@@ -1,0 +1,19 @@
+rule "MDL-006" {
+  category structural
+  title tr "Hekim bilgisi eksik/geçersiz"
+        en "Physician missing or invalid"
+  basis "Each service is attributed to a registered physician"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    when not matches(line.doctor, "^\d{6}$") or doctor(line.doctor) == null
+      report expected "\d{6}" actual line.doctor ?? ""
+  }
+
+  reason tr "Satır {line} ({code}) hekim tescil no '{actual}' faturadaki hekim listesinde yok veya geçersiz."
+         en "Line {line} ({code}): physician registration '{actual}' is not on the invoice or is malformed."
+  fix ChangeDoctor value expected
+    tr "Hizmeti yapan hekimi ({expected} biçiminde tescil no) faturaya ekleyin veya satırı doğru hekime bağlayın."
+    en "Add the performing physician (registration {expected}) to the invoice or link the line to the right one."
+}

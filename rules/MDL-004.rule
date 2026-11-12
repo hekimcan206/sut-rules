@@ -1,0 +1,19 @@
+rule "MDL-004" {
+  category structural
+  title tr "SUT kodu bu sürümde yok"
+        en "SUT code not in the version in force"
+  basis "SUT annex lists (EK-2/B, EK-2/C) define billable codes"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    when procedure(line.code) == null
+      report expected sut.id actual line.code
+  }
+
+  reason tr "Satır {line}: {code} kodu {expected} sürümünde tanımlı değil."
+         en "Line {line}: code {code} is not defined in SUT version {expected}."
+  fix CorrectField
+    tr "Kodu {expected} listesindeki güncel karşılığıyla değiştirin; kaldırılmış kodlar faturalandırılamaz."
+    en "Replace the code with its current equivalent in {expected}; withdrawn codes cannot be billed."
+}

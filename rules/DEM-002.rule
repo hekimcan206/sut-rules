@@ -1,0 +1,23 @@
+rule "DEM-002" {
+  category demographic
+  title tr "İşlem hasta yaşına uygun değil"
+        en "Procedure not valid for the patient's age"
+  basis "Age-restricted procedures (paediatric, screening ages)"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let p = procedure(line.code)
+    require p.min_age != null or p.max_age != null
+    # Age on the service date, in completed years.
+    let years = age(patient.birth_date, line.date)
+    when years < p.min_age or years > p.max_age
+      report expected str(p.min_age) + "-" + str(p.max_age) actual years
+  }
+
+  reason tr "Satır {line} ({code}) {expected} yaş aralığında faturalandırılır; hasta {actual} yaşında."
+         en "Line {line} ({code}) is billable for ages {expected}; the patient is {actual}."
+  fix ReviewClinically
+    tr "Doğum tarihini doğrulayın; yaş aralığı dışındaki uygulama için tıbbi gerekçe raporu ekleyin veya satırı çıkarın."
+    en "Verify the birth date; attach a medical justification for an out-of-range use or remove the line."
+}

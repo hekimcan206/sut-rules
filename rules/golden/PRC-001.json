@@ -1,0 +1,30 @@
+{
+  "rule": "PRC-001",
+  "cases": [
+    { "name": "tariff prices", "expect": [] },
+    {
+      "name": "price above the tariff",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 90.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "85.00", "actual": "90.00", "fixValue": "85.00",
+                    "reasonEn": "Line 1 (902001) is priced 90.00 TRY; the tariff in force is 85.00 TRY." } ]
+    },
+    {
+      "name": "unknown codes are MDL-004's finding, not a price finding",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "999999", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 1.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "the old hemogram price is right before the mid-2025 amendment",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "901001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 28.50, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "and wrong after it",
+      "patch": {
+        "invoiceDate": "2025-08-20",
+        "provision": { "admissionDate": "2025-08-10" },
+        "lines": [ { "lineNo": 1, "sutCode": "901001", "serviceDate": "2025-08-10", "quantity": 1, "unitPrice": 28.50, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "30.80", "actual": "28.50" } ]
+    }
+  ]
+}

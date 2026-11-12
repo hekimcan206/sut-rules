@@ -1,0 +1,33 @@
+{
+  "rule": "PRC-002",
+  "cases": [
+    { "name": "within the daily limit", "expect": [] },
+    {
+      "name": "one line above the limit",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 3, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "2", "actual": "3", "fixValue": "2" } ]
+    },
+    {
+      "name": "the limit is per day across lines, so every line of that day is reported",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903009", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 3, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 2, "unitPrice": 85.00, "doctorRegistrationNo": "100002" } ] },
+      "expect": [
+        { "line": 1, "severity": "Error", "expected": "2", "actual": "3" },
+        { "line": 3, "severity": "Error", "expected": "2", "actual": "3" } ]
+    },
+    {
+      "name": "the same quantity spread over two days",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "902001", "serviceDate": "2025-03-11", "quantity": 2, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "bed-days have no daily limit",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "904001", "serviceDate": "2025-03-10", "quantity": 9, "unitPrice": 650.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# Introduced in the mid-2025 amendment as a warning with a 60-day limit; the 2026 amendment cut the limit to 45.
+rule "ADM-001" {
+  category administrative
+  title tr "Fatura geç düzenlenmiş"
+        en "Invoice issued late"
+  basis "Monthly invoicing deadlines"
+
+  param max_lag_days int
+
+  version "SUT-2025.07" { severity warning max_lag_days = 60 }
+  version "SUT-2026.01" { max_lag_days = 45 }
+
+  check invoice {
+    require count(lines) > 0
+    let lag = invoice.date - max(l in lines: l.date)
+    when lag > max_lag_days
+      report expected max_lag_days actual lag
+  }
+
+  reason tr "Fatura, son hizmetten {actual} gün sonra düzenlenmiş; sınır {expected} gün."
+         en "The invoice was issued {actual} days after the last service; the limit is {expected} days."
+  fix ChangeInvoiceDate
+    tr "Dönem faturasına zamanında ekleyin; gecikme gerekçesini fatura ekinde belirtin."
+    en "Include it in the period invoice on time; state the reason for the delay in the invoice annex."
+}

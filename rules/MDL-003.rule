@@ -1,0 +1,23 @@
+rule "MDL-003" {
+  category structural
+  title tr "Fatura tarihi hizmetten önce"
+        en "Invoice dated before the service or discharge"
+  basis "Invoices follow completed episodes"
+
+  version "SUT-2025.01" { severity error }
+
+  check invoice {
+    when provision.treatment == Inpatient and provision.discharge == null
+      report expected "discharge" actual str(invoice.date)
+    let last_service = if count(lines) == 0 then provision.admission else max(l in lines: l.date)
+    let latest = greatest(last_service, provision.discharge)
+    when invoice.date < latest
+      report expected str(latest) actual str(invoice.date)
+  }
+
+  reason tr "Fatura tarihi {actual}, son hizmet/taburcu tarihi {expected} öncesinde."
+         en "Invoice date {actual} precedes the last service / discharge date {expected}."
+  fix ChangeInvoiceDate
+    tr "Faturayı {expected} veya sonrasına tarihleyin; yatan hastada taburcu olmadan fatura kesmeyin."
+    en "Date the invoice on or after {expected}; do not invoice an inpatient stay before discharge."
+}

@@ -1,0 +1,23 @@
+{
+  "invoiceNo": "GOLDEN-0001",
+  "invoiceDate": "2025-03-20",
+  "facilityCode": "SYN001",
+  "patient": { "patientRef": "P00000001", "birthDate": "1980-05-15", "gender": "Female" },
+  "provision": {
+    "trackingNo": "TK1234567",
+    "admissionDate": "2025-03-10",
+    "treatmentType": "Outpatient",
+    "provisionType": "Normal",
+    "branchCode": "1100"
+  },
+  "doctors": [
+    { "registrationNo": "100001", "branchCode": "1100" },
+    { "registrationNo": "100002", "branchCode": "1100" }
+  ],
+  "diagnoses": [ { "icdCode": "J18.9", "isPrimary": true } ],
+  "lines": [
+    { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+    { "lineNo": 2, "sutCode": "903009", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" }
+  ],
+  "priorServices": []
+}

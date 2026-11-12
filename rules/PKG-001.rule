@@ -1,0 +1,21 @@
+rule "PKG-001" {
+  category package
+  title tr "Paket kapsamındaki hizmet ayrıca faturalandırılmış"
+        en "Service included in a package billed separately"
+  basis "Diagnosis-based packages (EK-2/C) absorb their components"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    # Deterministic attribution when several packages contain the service: the lowest package code.
+    let package = min(l in lines where procedure(l.code).kind == Package and line.code in procedure(l.code).package_contents: l.code)
+    when package != null
+      report expected package
+  }
+
+  reason tr "Satır {line} ({code}) {expected} paketinin kapsamında; ayrıca faturalandırılamaz."
+         en "Line {line} ({code}) is included in package {expected} and cannot be billed separately."
+  fix RemoveLine
+    tr "Satır {line}'i çıkarın; bedel {expected} paket fiyatına dahildir."
+    en "Remove line {line}; its cost is included in the price of package {expected}."
+}

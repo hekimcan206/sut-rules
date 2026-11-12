@@ -1,0 +1,22 @@
+{
+  "rule": "MDL-005",
+  "cases": [
+    { "name": "distinct lines", "expect": [] },
+    {
+      "name": "same code, day and physician twice",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903009", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 3, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 3, "severity": "Error", "expected": "1", "actual": null,
+                    "reasonEn": "Line 3 (902001) repeats line 1: same code, same day, same physician." } ]
+    },
+    {
+      "name": "same code and day by another physician",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100002" } ] },
+      "expect": []
+    }
+  ]
+}

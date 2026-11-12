@@ -1,0 +1,20 @@
+# The tracking number (takip numarası) keys every service record in MEDULA.
+rule "MDL-001" {
+  category structural
+  title tr "Takip numarası geçersiz"
+        en "Invalid provision tracking number"
+  basis "MEDULA provision (takip) is the key of every service record"
+
+  version "SUT-2025.01" { severity error }
+
+  check invoice {
+    when not matches(provision.tracking_no, "^[0-9A-Z]{7,10}$")
+      report expected "[0-9A-Z]{7,10}" actual provision.tracking_no
+  }
+
+  reason tr "Takip numarası '{actual}' biçim olarak geçersiz; MEDULA hizmet kaydını kabul etmez."
+         en "Tracking number '{actual}' is malformed; MEDULA will not accept the service record."
+  fix ChangeProvision value expected
+    tr "Provizyonu MEDULA'dan yeniden sorgulayıp {expected} biçimindeki takip numarasını faturaya yazın."
+    en "Re-query the provision in MEDULA and put the tracking number ({expected}) on the invoice."
+}

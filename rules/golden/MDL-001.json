@@ -1,0 +1,18 @@
+{
+  "rule": "MDL-001",
+  "cases": [
+    { "name": "well-formed tracking number", "expect": [] },
+    { "name": "ten characters is the upper bound", "patch": { "provision": { "trackingNo": "ABCDE12345" } }, "expect": [] },
+    {
+      "name": "lower-case letters are rejected",
+      "patch": { "provision": { "trackingNo": "tk12345a" } },
+      "expect": [ { "line": null, "severity": "Error", "expected": "[0-9A-Z]{7,10}", "actual": "tk12345a",
+                    "reasonEn": "Tracking number 'tk12345a' is malformed; MEDULA will not accept the service record.", "fixValue": "[0-9A-Z]{7,10}" } ]
+    },
+    {
+      "name": "too short",
+      "patch": { "provision": { "trackingNo": "AB123" } },
+      "expect": [ { "line": null, "severity": "Error", "expected": "[0-9A-Z]{7,10}", "actual": "AB123" } ]
+    }
+  ]
+}

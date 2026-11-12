@@ -1,0 +1,25 @@
+# Introduced by the 2026 annual amendment: bed-days are checked against the length of stay.
+rule "PKG-004" {
+  category package
+  title tr "Yatak günü yatış süresini aşıyor"
+        en "Bed-days exceed the length of stay"
+  basis "Bed-day billing tied to admission and discharge dates"
+
+  version "SUT-2026.01" { severity error }
+
+  check invoice {
+    require provision.treatment == Inpatient and provision.discharge != null
+    # Same-day admission and discharge still counts as one bed-day.
+    let stay = greatest(1, provision.discharge - provision.admission)
+    let billed = sum(l in lines where procedure(l.code).kind == BedDay: l.quantity)
+    let last_no = max(l in lines where procedure(l.code).kind == BedDay: l.no)
+    when billed > stay
+      report at first(l in lines where l.no == last_no) expected stay actual billed
+  }
+
+  reason tr "Satır {line} ({code}) toplam {actual} yatak günü; yatış süresi {expected} gün."
+         en "Line {line} ({code}) bills {actual} bed-days; the length of stay is {expected} day(s)."
+  fix ReduceQuantity value expected
+    tr "Yatak günü adedini {expected} olarak düzeltin."
+    en "Set the bed-day quantity to {expected}."
+}

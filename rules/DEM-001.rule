@@ -1,0 +1,20 @@
+rule "DEM-001" {
+  category demographic
+  title tr "İşlem hasta cinsiyetine uygun değil"
+        en "Procedure not valid for the patient's sex"
+  basis "Sex-specific procedures"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let required = procedure(line.code).sex
+    when required != null and required != patient.sex
+      report expected required actual patient.sex
+  }
+
+  reason tr "Satır {line} ({code}) yalnızca {expected} hastalarda faturalandırılır; hasta {actual}."
+         en "Line {line} ({code}) is billable for {expected} patients only; the patient is {actual}."
+  fix ReviewClinically
+    tr "Hasta cinsiyetini kimlik kaydıyla doğrulayın; doğruysa kodu cinsiyete uygun karşılığıyla değiştirin."
+    en "Verify the patient's sex against the identity record; if it is right, use the sex-appropriate code."
+}

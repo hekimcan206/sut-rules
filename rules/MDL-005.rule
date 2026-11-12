@@ -1,0 +1,20 @@
+rule "MDL-005" {
+  category structural
+  title tr "Mükerrer hizmet satırı"
+        en "Duplicate service line"
+  basis "Duplicate records are a common rejection reason"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let first_no = min(l in lines where l.code == line.code and l.date == line.date and l.doctor == line.doctor: l.no)
+    when first_no < line.no
+      report expected first_no
+  }
+
+  reason tr "Satır {line} ({code}), satır {expected} ile aynı gün, aynı hekim ve aynı kodla tekrar girilmiş."
+         en "Line {line} ({code}) repeats line {expected}: same code, same day, same physician."
+  fix RemoveLine
+    tr "Satır {line}'i silin; birden fazla uygulama yapıldıysa satır {expected}'in adedini artırın."
+    en "Remove line {line}; if the service was really repeated, increase the quantity on line {expected}."
+}

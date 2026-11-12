@@ -1,0 +1,20 @@
+rule "PKG-003" {
+  category package
+  title tr "Yatarak tedavi gerektiren işlem ayaktan faturalandırılmış"
+        en "Inpatient-only service on an outpatient provision"
+  basis "Treatment-setting restrictions"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    require provision.treatment != Inpatient
+    when procedure(line.code).inpatient_only == true
+      report expected "Inpatient" actual provision.treatment
+  }
+
+  reason tr "Satır {line} ({code}) yalnızca yatarak tedavide faturalandırılır; provizyon {actual}."
+         en "Line {line} ({code}) is billable in inpatient care only; the provision is {actual}."
+  fix ChangeProvision value expected
+    tr "Provizyon tedavi türünü {expected} olarak düzeltin veya hizmeti yatış provizyonuna taşıyın."
+    en "Change the provision treatment type to {expected} or move the service to the inpatient provision."
+}

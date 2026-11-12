@@ -1,0 +1,27 @@
+{
+  "rule": "MDL-004",
+  "cases": [
+    { "name": "known codes", "expect": [] },
+    {
+      "name": "code that never existed",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "999999", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 2, "severity": "Error", "expected": "SUT-2025.01", "actual": "999999" } ]
+    },
+    {
+      "name": "newborn screening is still billable in 2025",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "901009", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 140.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "the same code after the 2026 amendment withdrew it",
+      "patch": {
+        "invoiceDate": "2026-02-10",
+        "provision": { "admissionDate": "2026-02-05" },
+        "lines": [ { "lineNo": 1, "sutCode": "901009", "serviceDate": "2026-02-05", "quantity": 1, "unitPrice": 140.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "SUT-2026.01", "actual": "901009",
+                    "reasonEn": "Line 1: code 901009 is not defined in SUT version SUT-2026.01." } ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+rule "DEM-003" {
+  category demographic
+  title tr "Tanı hasta cinsiyetine uygun değil"
+        en "Diagnosis not valid for the patient's sex"
+  basis "ICD-10 sex-specific chapters (e.g. O00-O9A)"
+
+  version "SUT-2025.01" { severity error }
+
+  check each d in diagnoses {
+    # Ranges compare the three-character ICD-10 category; string comparison is ordinal.
+    let range = first(r in sut.diagnosis_sex where r.sex != patient.sex and len(d.icd) >= 3 and between(substr(d.icd, 0, 3), r.from, r.to))
+    when range != null
+      report expected range.sex actual d.icd
+  }
+
+  reason tr "Tanı {actual} yalnızca {expected} hastalarda kullanılabilir."
+         en "Diagnosis {actual} can only be used for {expected} patients."
+  fix CorrectDiagnosis
+    tr "Tanı kodunu veya hasta cinsiyetini düzeltin."
+    en "Correct the diagnosis code or the patient's recorded sex."
+}

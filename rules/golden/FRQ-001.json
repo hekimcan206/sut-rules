@@ -1,0 +1,64 @@
+{
+  "rule": "FRQ-001",
+  "cases": [
+    { "name": "no frequency-limited service", "expect": [] },
+    {
+      "name": "third TSH inside 90 days counting history",
+      "patch": {
+        "priorServices": [
+          { "sutCode": "901005", "serviceDate": "2025-01-15", "quantity": 1, "branchCode": "1100" },
+          { "sutCode": "901005", "serviceDate": "2025-02-20", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "901005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 46.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "2/90", "actual": "3",
+                    "reasonEn": "Line 1 (901005) exceeds its frequency limit: 3 units, allowed 2/90." } ]
+    },
+    {
+      "name": "window starts 89 days before the service: a billing on that day counts",
+      "patch": {
+        "priorServices": [
+          { "sutCode": "901005", "serviceDate": "2024-12-11", "quantity": 1, "branchCode": "1100" },
+          { "sutCode": "901005", "serviceDate": "2025-02-20", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "901005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 46.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "2/90", "actual": "3" } ]
+    },
+    {
+      "name": "a day earlier it is outside the window",
+      "patch": {
+        "priorServices": [
+          { "sutCode": "901005", "serviceDate": "2024-12-10", "quantity": 1, "branchCode": "1100" },
+          { "sutCode": "901005", "serviceDate": "2025-02-20", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "901005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 46.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "on one invoice only the line that crosses the limit is reported",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "901005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 46.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "901005", "serviceDate": "2025-03-11", "quantity": 1, "unitPrice": 46.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 3, "sutCode": "901005", "serviceDate": "2025-03-12", "quantity": 1, "unitPrice": 46.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 3, "severity": "Error", "expected": "2/90", "actual": "3" } ]
+    },
+    {
+      "name": "three HbA1c in six months are fine under the 2025.01 limit of 4 per year",
+      "patch": {
+        "invoiceDate": "2025-06-20",
+        "provision": { "admissionDate": "2025-06-10" },
+        "priorServices": [
+          { "sutCode": "901002", "serviceDate": "2025-01-10", "quantity": 1, "branchCode": "1100" },
+          { "sutCode": "901002", "serviceDate": "2025-04-01", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "901002", "serviceDate": "2025-06-10", "quantity": 1, "unitPrice": 64.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "and exceed the mid-2025 amendment's 2 per 180 days",
+      "patch": {
+        "invoiceDate": "2025-08-20",
+        "provision": { "admissionDate": "2025-08-10" },
+        "priorServices": [
+          { "sutCode": "901002", "serviceDate": "2025-03-01", "quantity": 1, "branchCode": "1100" },
+          { "sutCode": "901002", "serviceDate": "2025-06-01", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "901002", "serviceDate": "2025-08-10", "quantity": 1, "unitPrice": 69.10, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "2/180", "actual": "3" } ]
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+# A warning in 2025, blocking from the 2026 annual amendment: the same rule, tightened by an amendment.
+rule "PRV-001" {
+  category provision
+  title tr "Kaza provizyonunda dış neden kodu yok"
+        en "Accident provision without an external-cause code"
+  basis "Work/traffic accident cases are recoverable from third parties"
+
+  version "SUT-2025.01" { severity warning }
+  version "SUT-2026.01" { severity error }
+
+  check invoice {
+    require provision.type in [WorkAccident, TrafficAccident]
+    # ICD-10 chapter XX, external causes of morbidity: V01-Y98.
+    when not any(d in diagnoses: any(letter in ["V", "W", "X", "Y"]: starts_with(d.icd, letter)))
+      report expected "V01-Y98" actual provision.type
+  }
+
+  reason tr "Provizyon türü {actual}, ancak dış neden tanısı ({expected}) yok."
+         en "Provision type is {actual} but there is no external-cause diagnosis ({expected})."
+  fix AddDiagnosis value expected
+    tr "Kazanın dış neden kodunu ({expected}) ikincil tanı olarak ekleyin; kaza değilse provizyon türünü düzeltin."
+    en "Add the external-cause code ({expected}) as a secondary diagnosis, or correct the provision type."
+}

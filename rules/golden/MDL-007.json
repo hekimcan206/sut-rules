@@ -1,0 +1,28 @@
+{
+  "rule": "MDL-007",
+  "cases": [
+    { "name": "one valid primary diagnosis", "expect": [] },
+    {
+      "name": "secondary diagnosis with a four-character subcode",
+      "patch": { "diagnoses": [ { "icdCode": "J18.9", "isPrimary": true }, { "icdCode": "O24.4291", "isPrimary": false } ] },
+      "expect": []
+    },
+    {
+      "name": "malformed code",
+      "patch": { "diagnoses": [ { "icdCode": "J18.9", "isPrimary": true }, { "icdCode": "E11-9", "isPrimary": false } ] },
+      "expect": [ { "line": null, "severity": "Error", "expected": "A00.0", "actual": "E11-9" } ]
+    },
+    {
+      "name": "two primary diagnoses",
+      "patch": { "diagnoses": [ { "icdCode": "J18.9", "isPrimary": true }, { "icdCode": "E11.9", "isPrimary": true } ] },
+      "expect": [ { "line": null, "severity": "Error", "expected": "1", "actual": "primary=2" } ]
+    },
+    {
+      "name": "malformed code and no primary report in that order",
+      "patch": { "diagnoses": [ { "icdCode": "j18.9", "isPrimary": false } ] },
+      "expect": [
+        { "line": null, "severity": "Error", "expected": "A00.0", "actual": "j18.9" },
+        { "line": null, "severity": "Error", "expected": "1", "actual": "primary=0" } ]
+    }
+  ]
+}

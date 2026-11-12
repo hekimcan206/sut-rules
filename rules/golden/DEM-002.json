@@ -1,0 +1,60 @@
+{
+  "rule": "DEM-002",
+  "cases": [
+    { "name": "no age-restricted procedure", "expect": [] },
+    {
+      "name": "paediatric examination for an adult",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "900103", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 130.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "-17", "actual": "44",
+                    "reasonEn": "Line 1 (900103) is billable for ages -17; the patient is 44." } ]
+    },
+    {
+      "name": "PSA one day before the 40th birthday",
+      "patch": {
+        "patient": { "birthDate": "1985-03-11", "gender": "Male" },
+        "lines": [ { "lineNo": 1, "sutCode": "901003", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 72.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "40-", "actual": "39" } ]
+    },
+    {
+      "name": "PSA on the 40th birthday",
+      "patch": {
+        "patient": { "birthDate": "1985-03-10", "gender": "Male" },
+        "lines": [ { "lineNo": 1, "sutCode": "901003", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 72.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "born on 29 February: still 17 on 28 February of a common year",
+      "patch": {
+        "patient": { "birthDate": "2008-02-29" },
+        "invoiceDate": "2026-03-10",
+        "provision": { "admissionDate": "2026-02-28" },
+        "lines": [ { "lineNo": 1, "sutCode": "900103", "serviceDate": "2026-02-28", "quantity": 1, "unitPrice": 135.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "born on 29 February: 18 on 1 March",
+      "patch": {
+        "patient": { "birthDate": "2008-02-29" },
+        "invoiceDate": "2026-03-10",
+        "provision": { "admissionDate": "2026-02-28" },
+        "lines": [ { "lineNo": 1, "sutCode": "900103", "serviceDate": "2026-03-01", "quantity": 1, "unitPrice": 135.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "-17", "actual": "18" } ]
+    },
+    {
+      "name": "mammography screening age is 35 in 2025",
+      "patch": {
+        "patient": { "birthDate": "1988-01-01" },
+        "lines": [ { "lineNo": 1, "sutCode": "902002", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 260.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "and 40 after the 2026 amendment",
+      "patch": {
+        "patient": { "birthDate": "1988-01-01" },
+        "invoiceDate": "2026-03-20",
+        "provision": { "admissionDate": "2026-03-10" },
+        "lines": [ { "lineNo": 1, "sutCode": "902002", "serviceDate": "2026-03-10", "quantity": 1, "unitPrice": 260.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "40-", "actual": "38" } ]
+    }
+  ]
+}

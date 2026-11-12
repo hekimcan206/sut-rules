@@ -1,0 +1,23 @@
+{
+  "rule": "MDL-003",
+  "cases": [
+    { "name": "invoice after the last service", "expect": [] },
+    { "name": "invoice without lines is dated after admission", "patch": { "lines": [] }, "expect": [] },
+    {
+      "name": "invoice dated before the service",
+      "patch": { "invoiceDate": "2025-03-09" },
+      "expect": [ { "line": null, "severity": "Error", "expected": "2025-03-10", "actual": "2025-03-09" } ]
+    },
+    {
+      "name": "inpatient invoiced before discharge",
+      "patch": { "provision": { "treatmentType": "Inpatient" } },
+      "expect": [ { "line": null, "severity": "Error", "expected": "discharge", "actual": "2025-03-20" } ]
+    },
+    {
+      "name": "invoice dated before the discharge date",
+      "patch": { "provision": { "treatmentType": "Inpatient", "dischargeDate": "2025-03-25" } },
+      "expect": [ { "line": null, "severity": "Error", "expected": "2025-03-25", "actual": "2025-03-20",
+                    "reasonEn": "Invoice date 2025-03-20 precedes the last service / discharge date 2025-03-25." } ]
+    }
+  ]
+}

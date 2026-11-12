@@ -1,0 +1,22 @@
+rule "PRC-002" {
+  category pricing
+  title tr "Günlük adet sınırı aşıldı"
+        en "Daily quantity limit exceeded"
+  basis "Per-day billing limits in the SUT annex notes"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let limit = procedure(line.code).max_per_day
+    require limit != null
+    let total = sum(l in lines where l.code == line.code and l.date == line.date: l.quantity)
+    when total > limit
+      report expected limit actual total
+  }
+
+  reason tr "Satır {line} ({code}) aynı gün toplam {actual} adet; günlük sınır {expected}."
+         en "Line {line} ({code}): {actual} units on one day; the daily limit is {expected}."
+  fix ReduceQuantity value expected
+    tr "Aynı gündeki toplam adedi {expected} adede indirin."
+    en "Reduce the total for that day to {expected} unit(s)."
+}

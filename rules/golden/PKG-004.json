@@ -1,0 +1,48 @@
+{
+  "rule": "PKG-004",
+  "cases": [
+    {
+      "name": "three bed-days for a three-night stay",
+      "patch": {
+        "invoiceDate": "2026-02-10",
+        "provision": { "treatmentType": "Inpatient", "admissionDate": "2026-02-01", "dischargeDate": "2026-02-04" },
+        "lines": [ { "lineNo": 1, "sutCode": "904001", "serviceDate": "2026-02-01", "quantity": 3, "unitPrice": 650.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "four bed-days for a three-night stay",
+      "patch": {
+        "invoiceDate": "2026-02-10",
+        "provision": { "treatmentType": "Inpatient", "admissionDate": "2026-02-01", "dischargeDate": "2026-02-04" },
+        "lines": [ { "lineNo": 1, "sutCode": "904001", "serviceDate": "2026-02-01", "quantity": 4, "unitPrice": 650.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "3", "actual": "4", "code": "904001", "fixValue": "3",
+                    "reasonEn": "Line 1 (904001) bills 4 bed-days; the length of stay is 3 day(s)." } ]
+    },
+    {
+      "name": "ward and intensive-care days add up and are reported on the last bed-day line",
+      "patch": {
+        "invoiceDate": "2026-02-10",
+        "provision": { "treatmentType": "Inpatient", "admissionDate": "2026-02-01", "dischargeDate": "2026-02-04" },
+        "lines": [
+          { "lineNo": 1, "sutCode": "904002", "serviceDate": "2026-02-01", "quantity": 2, "unitPrice": 4200.00, "doctorRegistrationNo": "100001" },
+          { "lineNo": 2, "sutCode": "902001", "serviceDate": "2026-02-01", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+          { "lineNo": 3, "sutCode": "904001", "serviceDate": "2026-02-03", "quantity": 2, "unitPrice": 650.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 3, "severity": "Error", "expected": "3", "actual": "4", "code": "904001" } ]
+    },
+    {
+      "name": "same-day admission and discharge counts as one bed-day",
+      "patch": {
+        "invoiceDate": "2026-02-10",
+        "provision": { "treatmentType": "Inpatient", "admissionDate": "2026-02-01", "dischargeDate": "2026-02-01" },
+        "lines": [ { "lineNo": 1, "sutCode": "904001", "serviceDate": "2026-02-01", "quantity": 2, "unitPrice": 650.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "1", "actual": "2" } ]
+    },
+    {
+      "name": "the rule is not in force before 2026",
+      "patch": {
+        "provision": { "treatmentType": "Inpatient", "dischargeDate": "2025-03-13" },
+        "lines": [ { "lineNo": 1, "sutCode": "904001", "serviceDate": "2025-03-10", "quantity": 9, "unitPrice": 650.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    }
+  ]
+}

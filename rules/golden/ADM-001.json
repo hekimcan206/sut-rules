@@ -1,0 +1,48 @@
+{
+  "rule": "ADM-001",
+  "cases": [
+    {
+      "name": "not in force before the mid-2025 amendment",
+      "patch": { "invoiceDate": "2025-06-20" },
+      "expect": []
+    },
+    {
+      "name": "67 days after the last service against the 60-day limit",
+      "patch": {
+        "invoiceDate": "2025-09-15",
+        "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-07-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": null, "severity": "Warning", "expected": "60", "actual": "67",
+                    "reasonEn": "The invoice was issued 67 days after the last service; the limit is 60 days." } ]
+    },
+    {
+      "name": "50 days is within 60",
+      "patch": {
+        "invoiceDate": "2025-08-29",
+        "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2025-07-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "but over the 45-day limit from 2026",
+      "patch": {
+        "invoiceDate": "2026-02-25",
+        "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2026-01-05", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": null, "severity": "Warning", "expected": "45", "actual": "51" } ]
+    },
+    {
+      "name": "exactly 45 days is on time",
+      "patch": {
+        "invoiceDate": "2026-02-19",
+        "lines": [ { "lineNo": 1, "sutCode": "902001", "serviceDate": "2026-01-05", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "the lag is measured from the latest line",
+      "patch": {
+        "invoiceDate": "2026-02-25",
+        "lines": [
+          { "lineNo": 1, "sutCode": "902001", "serviceDate": "2026-01-05", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" },
+          { "lineNo": 2, "sutCode": "903009", "serviceDate": "2026-01-20", "quantity": 1, "unitPrice": 42.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    }
+  ]
+}

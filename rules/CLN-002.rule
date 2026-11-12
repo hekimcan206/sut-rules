@@ -1,0 +1,23 @@
+rule "CLN-002" {
+  category clinical
+  title tr "Hekim branşı yetkili değil"
+        en "Physician specialty not authorised"
+  basis "Specialty-restricted services (uzman hekim şartı)"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let allowed = procedure(line.code).allowed_branches
+    let performer = doctor(line.doctor)
+    # A missing physician is MDL-006's finding; reporting it here too would count one defect twice.
+    require count(allowed) > 0 and performer != null
+    when performer.branch not in allowed
+      report expected join(allowed, ", ") actual performer.branch
+  }
+
+  reason tr "Satır {line} ({code}) hekim branşı {actual}; yetkili branşlar: {expected}."
+         en "Line {line} ({code}) was performed by specialty {actual}; authorised specialties: {expected}."
+  fix ChangeDoctor value expected
+    tr "Satırı yetkili branştaki ({expected}) hekime bağlayın veya istem/konsültasyon kaydını ekleyin."
+    en "Attribute the line to a physician in {expected} or attach the request/consultation record."
+}

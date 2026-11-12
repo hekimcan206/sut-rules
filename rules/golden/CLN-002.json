@@ -1,0 +1,29 @@
+{
+  "rule": "CLN-002",
+  "cases": [
+    { "name": "no specialty restriction", "expect": [] },
+    {
+      "name": "brain CT reported by internal medicine",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "902005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 540.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "1600", "actual": "1100", "fixValue": "1600" } ]
+    },
+    {
+      "name": "colonoscopy lists every authorised branch",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "903001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 1450.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "1200, 1800", "actual": "1100",
+                    "reasonEn": "Line 1 (903001) was performed by specialty 1100; authorised specialties: 1200, 1800." } ]
+    },
+    {
+      "name": "brain CT by radiology",
+      "patch": {
+        "doctors": [ { "registrationNo": "100001", "branchCode": "1600" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "902005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 540.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "unknown physician is left to MDL-006",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "902005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 540.00, "doctorRegistrationNo": "999999" } ] },
+      "expect": []
+    }
+  ]
+}

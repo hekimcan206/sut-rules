@@ -1,0 +1,26 @@
+{
+  "rule": "DEM-001",
+  "cases": [
+    { "name": "no sex-specific procedure", "expect": [] },
+    {
+      "name": "PSA billed for a female patient",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "901003", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 72.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "Male", "actual": "Female",
+                    "reasonEn": "Line 1 (901003) is billable for Male patients only; the patient is Female." } ]
+    },
+    {
+      "name": "PSA billed for a male patient",
+      "patch": {
+        "patient": { "gender": "Male" },
+        "lines": [ { "lineNo": 1, "sutCode": "901003", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 72.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "obstetric ultrasound billed for a male patient",
+      "patch": {
+        "patient": { "gender": "Male" },
+        "lines": [ { "lineNo": 1, "sutCode": "902004", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 230.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "Female", "actual": "Male" } ]
+    }
+  ]
+}

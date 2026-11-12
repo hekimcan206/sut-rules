@@ -1,0 +1,29 @@
+{
+  "rule": "PRV-001",
+  "cases": [
+    { "name": "normal provision", "expect": [] },
+    {
+      "name": "work accident without an external cause is a warning in 2025",
+      "patch": { "provision": { "provisionType": "WorkAccident" } },
+      "expect": [ { "line": null, "severity": "Warning", "expected": "V01-Y98", "actual": "WorkAccident", "fixValue": "V01-Y98",
+                    "reasonEn": "Provision type is WorkAccident but there is no external-cause diagnosis (V01-Y98)." } ]
+    },
+    {
+      "name": "and an error from 2026",
+      "patch": { "invoiceDate": "2026-03-20", "provision": { "provisionType": "TrafficAccident" } },
+      "expect": [ { "line": null, "severity": "Error", "expected": "V01-Y98", "actual": "TrafficAccident" } ]
+    },
+    {
+      "name": "external-cause code present",
+      "patch": {
+        "provision": { "provisionType": "TrafficAccident" },
+        "diagnoses": [ { "icdCode": "S82.2", "isPrimary": true }, { "icdCode": "V43.5", "isPrimary": false } ] },
+      "expect": []
+    },
+    {
+      "name": "forensic cases are out of scope",
+      "patch": { "provision": { "provisionType": "Forensic" } },
+      "expect": []
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+rule "CLN-001" {
+  category clinical
+  title tr "Gerekli tanı yok"
+        en "Required diagnosis missing"
+  basis "Indication-bound services (endikasyon)"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let prefixes = procedure(line.code).required_icd
+    require count(prefixes) > 0
+    when not any(d in diagnoses: any(prefix in prefixes: starts_with(d.icd, prefix)))
+      report expected join(prefixes, ", ")
+  }
+
+  reason tr "Satır {line} ({code}) şu tanılardan biri olmadan faturalandırılamaz: {expected}."
+         en "Line {line} ({code}) cannot be billed without one of these diagnoses: {expected}."
+  fix AddDiagnosis value expected
+    tr "Endikasyonu destekleyen tanıyı ({expected}) ekleyin; endikasyon yoksa satırı çıkarın."
+    en "Add the supporting diagnosis ({expected}); if there is no indication, remove the line."
+}

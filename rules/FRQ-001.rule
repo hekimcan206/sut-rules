@@ -1,0 +1,26 @@
+rule "FRQ-001" {
+  category frequency
+  title tr "Sıklık sınırı aşıldı"
+        en "Frequency limit exceeded"
+  basis "Frequency-limited tests (e.g. HbA1c, screening)"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    let limit = procedure(line.code).frequency
+    require limit != null
+    # Rolling window of limit.days days ending on the service date, inclusive on both ends. Earlier billings come
+    # from the patient's history; on this invoice, lines up to and including this one count.
+    let start = line.date - (limit.days - 1)
+    let earlier = sum(p in prior where p.code == line.code and p.date >= start and p.date <= line.date: p.quantity)
+    let here = sum(o in lines where o.code == line.code and o.date >= start and (o.date < line.date or o.date == line.date and o.no <= line.no): o.quantity)
+    when earlier + here > limit.count
+      report expected str(limit.count) + "/" + str(limit.days) actual earlier + here
+  }
+
+  reason tr "Satır {line} ({code}) dönemsel sınırı aşıyor: {actual} adet, izin verilen {expected}."
+         en "Line {line} ({code}) exceeds its frequency limit: {actual} units, allowed {expected}."
+  fix RemoveLine
+    tr "Önceki uygulama tarihini kontrol edin; sıklık dışı tekrar için gerekçe raporu ekleyin veya satırı çıkarın."
+    en "Check the previous date; attach a justification for an early repeat or remove the line."
+}

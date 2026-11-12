@@ -1,0 +1,26 @@
+rule "MDL-007" {
+  category structural
+  title tr "Tanı kodlaması hatalı"
+        en "Diagnosis coding invalid"
+  basis "MEDULA requires ICD-10 coded diagnoses"
+
+  version "SUT-2025.01" { severity error }
+
+  # Category letter, two digits, optional dot and up to four characters (ICD-10 / ICD-10-TR style).
+  check each d in diagnoses {
+    when not matches(d.icd, "^[A-Z][0-9][0-9A-Z](\.[0-9A-Z]{1,4})?$")
+      report expected "A00.0" actual d.icd
+  }
+
+  check invoice {
+    let primaries = count(d in diagnoses where d.primary)
+    when primaries != 1
+      report expected "1" actual "primary=" + str(primaries)
+  }
+
+  reason tr "Tanı '{actual}' ICD-10 biçimine uymuyor veya ana tanı sayısı hatalı ({expected})."
+         en "Diagnosis '{actual}' is not valid ICD-10 or the primary-diagnosis count is wrong ({expected})."
+  fix CorrectDiagnosis
+    tr "Tanıyı ICD-10 biçiminde (ör. E11.9) yazın ve tam olarak bir ana tanı işaretleyin."
+    en "Write the diagnosis in ICD-10 form (e.g. E11.9) and mark exactly one primary diagnosis."
+}

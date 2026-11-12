@@ -1,0 +1,20 @@
+rule "MDL-002" {
+  category structural
+  title tr "Hizmet tarihi provizyon dönemi dışında"
+        en "Service date outside the provision period"
+  basis "Services are billed under the provision they were delivered in"
+
+  version "SUT-2025.01" { severity error }
+
+  check each line in lines {
+    # An open provision (no discharge yet) has no upper bound.
+    when line.date < provision.admission or line.date > provision.discharge
+      report expected str(provision.admission) + ".." + str(provision.discharge) actual str(line.date)
+  }
+
+  reason tr "Satır {line} ({code}) hizmet tarihi {actual}, provizyon dönemi {expected} dışında."
+         en "Line {line} ({code}) is dated {actual}, outside the provision period {expected}."
+  fix CorrectField
+    tr "Hizmet tarihini {expected} aralığına düzeltin ya da hizmeti ait olduğu provizyona taşıyın."
+    en "Correct the service date into {expected} or move the service to the provision it belongs to."
+}

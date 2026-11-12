@@ -1,0 +1,26 @@
+{
+  "rule": "PKG-003",
+  "cases": [
+    { "name": "outpatient services", "expect": [] },
+    {
+      "name": "caesarean section on an outpatient provision",
+      "patch": { "lines": [ { "lineNo": 1, "sutCode": "903005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 9800.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "Inpatient", "actual": "Outpatient", "fixValue": "Inpatient",
+                    "reasonEn": "Line 1 (903005) is billable in inpatient care only; the provision is Outpatient." } ]
+    },
+    {
+      "name": "bed-day on a day-case provision",
+      "patch": {
+        "provision": { "treatmentType": "DayCase" },
+        "lines": [ { "lineNo": 1, "sutCode": "904001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 650.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "Inpatient", "actual": "DayCase" } ]
+    },
+    {
+      "name": "inpatient provision",
+      "patch": {
+        "provision": { "treatmentType": "Inpatient", "dischargeDate": "2025-03-12" },
+        "lines": [ { "lineNo": 1, "sutCode": "903005", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 9800.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    }
+  ]
+}

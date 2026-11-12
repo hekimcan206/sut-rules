@@ -2,4 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/SutRules.Core/SutRules.Core.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SutRules.Tests/SutRules.Tests.csproj" />
+  </Folder>
 </Solution>

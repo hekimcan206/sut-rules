@@ -1,0 +1,29 @@
+rule "FRQ-002" {
+  category frequency
+  title tr "10 gün içinde aynı branşta muayene"
+        en "Repeat examination in the same specialty"
+  basis "Outpatient examination repeat window (SUT 2.4.4.A structure)"
+
+  param repeat_days int
+
+  version "SUT-2025.01" { severity error repeat_days = 10 }
+
+  check each line in lines {
+    # Emergency visits are outside the repeat-examination window.
+    require provision.type != Emergency
+    let performer = doctor(line.doctor)
+    require procedure(line.code).kind == Examination and performer != null
+    let start = line.date - (repeat_days - 1)
+    let from_history = min(p in prior where p.branch == performer.branch and p.date >= start and p.date <= line.date and procedure(p.code).kind == Examination: p.date)
+    let on_invoice = min(o in lines where o.no != line.no and o.date >= start and (o.date < line.date or o.date == line.date and o.no < line.no) and procedure(o.code).kind == Examination and doctor(o.doctor).branch == performer.branch: o.date)
+    let earlier = least(from_history, on_invoice)
+    when earlier != null
+      report expected repeat_days actual earlier
+  }
+
+  reason tr "Satır {line} ({code}) muayenesi, {actual} tarihindeki aynı branş muayenesinden sonraki {expected} gün içinde."
+         en "Line {line} ({code}): examination within {expected} days of a same-specialty examination on {actual}."
+  fix RemoveLine
+    tr "Muayene satırını çıkarın; kontrol muayenesi ayrıca faturalandırılmaz (ek işlemler faturalandırılabilir)."
+    en "Remove the examination line; a follow-up visit is not billed again (additional procedures still are)."
+}

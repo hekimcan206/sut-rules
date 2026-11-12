@@ -1,0 +1,50 @@
+{
+  "rule": "FRQ-002",
+  "cases": [
+    { "name": "no examination", "expect": [] },
+    {
+      "name": "same-branch examination five days earlier",
+      "patch": {
+        "priorServices": [ { "sutCode": "900101", "serviceDate": "2025-03-05", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "900101", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 120.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "10", "actual": "2025-03-05",
+                    "reasonEn": "Line 1 (900101): examination within 10 days of a same-specialty examination on 2025-03-05." } ]
+    },
+    {
+      "name": "nine days earlier is the edge of the 10-day window",
+      "patch": {
+        "priorServices": [ { "sutCode": "900101", "serviceDate": "2025-03-01", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "900101", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 120.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 1, "severity": "Error", "expected": "10", "actual": "2025-03-01" } ]
+    },
+    {
+      "name": "ten days earlier is outside it",
+      "patch": {
+        "priorServices": [ { "sutCode": "900101", "serviceDate": "2025-02-28", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "900101", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 120.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "another branch does not count",
+      "patch": {
+        "priorServices": [ { "sutCode": "900101", "serviceDate": "2025-03-05", "quantity": 1, "branchCode": "2000" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "900101", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 120.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "emergency visits are exempt",
+      "patch": {
+        "provision": { "provisionType": "Emergency" },
+        "priorServices": [ { "sutCode": "900101", "serviceDate": "2025-03-05", "quantity": 1, "branchCode": "1100" } ],
+        "lines": [ { "lineNo": 1, "sutCode": "900101", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 120.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    },
+    {
+      "name": "two same-branch examinations on one invoice: the later line is reported",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "900101", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 120.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "900101", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 120.00, "doctorRegistrationNo": "100002" } ] },
+      "expect": [ { "line": 2, "severity": "Error", "expected": "10", "actual": "2025-03-10" } ]
+    }
+  ]
+}

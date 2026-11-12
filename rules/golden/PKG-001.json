@@ -1,0 +1,30 @@
+{
+  "rule": "PKG-001",
+  "cases": [
+    { "name": "no package", "expect": [] },
+    {
+      "name": "hemogram billed next to the appendectomy package",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "903007", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 14200.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "901001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 28.50, "doctorRegistrationNo": "100001" },
+        { "lineNo": 3, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 2, "severity": "Error", "expected": "903007", "actual": null,
+                    "reasonEn": "Line 2 (901001) is included in package 903007 and cannot be billed separately." } ]
+    },
+    {
+      "name": "two packages contain the service: the lower code is named",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "903008", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 18600.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "903007", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 14200.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 3, "sutCode": "901006", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 12.40, "doctorRegistrationNo": "100001" } ] },
+      "expect": [ { "line": 3, "severity": "Error", "expected": "903007", "actual": null } ]
+    },
+    {
+      "name": "a service outside the package contents",
+      "patch": { "lines": [
+        { "lineNo": 1, "sutCode": "903007", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 14200.00, "doctorRegistrationNo": "100001" },
+        { "lineNo": 2, "sutCode": "902001", "serviceDate": "2025-03-10", "quantity": 1, "unitPrice": 85.00, "doctorRegistrationNo": "100001" } ] },
+      "expect": []
+    }
+  ]
+}

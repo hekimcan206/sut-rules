@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <RootNamespace>SutRules</RootNamespace>
+    <Description>A versioned rule language for SUT (Sağlık Uygulama Tebliği) invoice checks: rules live in files and run against the SUT version valid on the invoice date.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="SutRules.Tests" />
+  </ItemGroup>
+
+</Project>

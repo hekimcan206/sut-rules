@@ -1,0 +1,5 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/SutRules.Core/SutRules.Core.csproj" />
+  </Folder>
+</Solution>

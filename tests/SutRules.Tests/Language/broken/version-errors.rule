@@ -1,0 +1,16 @@
+rule "TST-004" {
+  category pricing
+  title tr "T" en "T"
+  basis "B"
+  param limit int
+  version "SUT-2025.07" { severity warning }
+  version "SUT-2025.01" { limit = 3 }
+  version "SUT-2026.01" { severity loud undeclared = 1 }
+  version "SUT-2027.01" { }
+  check invoice {
+    when count(lines) > limit
+      report expected limit
+  }
+  reason tr "R {expected}" en "R {expected}"
+  fix RemoveLine tr "F" en "F"
+}

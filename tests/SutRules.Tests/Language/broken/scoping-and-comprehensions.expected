@@ -1,0 +1,6 @@
+scoping-and-comprehensions.rule:7:5: error SR108: 'line' is already defined; choose another name (names cannot be shadowed).
+scoping-and-comprehensions.rule:9:13: error SR107: sum() needs numbers, not string; add ': <number>' to choose what to add up.
+scoping-and-comprehensions.rule:9:5: error SR108: 'n' is already defined; choose another name (names cannot be shadowed).
+scoping-and-comprehensions.rule:10:10: error SR105: The ': condition' of any() must be a bool, not int.
+scoping-and-comprehensions.rule:10:42: error SR107: all() needs a condition: all(x in xs: condition).
+scoping-and-comprehensions.rule:11:17: error SR109: 'report at' needs a line, but this is invoice.

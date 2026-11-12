@@ -1,0 +1,4 @@
+template-regex-fix.rule:11:3: error SR203: Unknown fix action 'Delete'. Known: CorrectField, SetUnitPrice, ReduceQuantity, RemoveLine, AddDiagnosis, CorrectDiagnosis, ChangeDoctor, ChangeProvision, ChangeInvoiceDate, ReviewClinically.
+template-regex-fix.rule:1:1: error SR210: Unknown placeholder '{lineNo}' in a text; use {line}, {code}, {expected} or {actual}.
+template-regex-fix.rule:1:1: error SR210: Unknown placeholder '{line_no}' in a text; use {line}, {code}, {expected} or {actual}.
+template-regex-fix.rule:7:45: error SR106: Invalid or unsupported regular expression: RegexOptions.NonBacktracking is not supported in conjunction with expressions containing: 'positive lookahead (?= pattern) or positive lookbehind (?<= pattern)'.

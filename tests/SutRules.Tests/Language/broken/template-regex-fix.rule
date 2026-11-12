@@ -1,0 +1,12 @@
+rule "TST-005" {
+  category pricing
+  title tr "T" en "T"
+  basis "B"
+  version "SUT-2025.01" { severity error }
+  check invoice {
+    when not matches(provision.tracking_no, "(?<=A)B")
+      report expected "x"
+  }
+  reason tr "Satır {lineNo}" en "Line {line_no}"
+  fix Delete tr "F" en "F"
+}

@@ -1,0 +1,4 @@
+rule "tst-8" {
+  category billing
+  version "SUT-2025.01" { retired }
+}

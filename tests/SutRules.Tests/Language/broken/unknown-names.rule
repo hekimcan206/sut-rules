@@ -1,0 +1,13 @@
+rule "TST-001" {
+  category pricing
+  title tr "T" en "T"
+  basis "B"
+  version "SUT-2025.01" { severity error }
+  check each line in lines {
+    let p = procedur(line.code)
+    when line.cod == "x"
+      report expected "1"
+  }
+  reason tr "R {expected}" en "R {expected}"
+  fix RemoveLine tr "F" en "F"
+}

@@ -1,0 +1,3 @@
+type-errors.rule:7:24: error SR102: Operator '==' cannot combine int and string.
+type-errors.rule:9:14: error SR105: The 'when' condition must be a bool, but this expression is string.
+type-errors.rule:11:20: error SR102: Operator '+' cannot combine date and string; convert with str() to build text.

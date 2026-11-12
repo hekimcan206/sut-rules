@@ -1,0 +1,16 @@
+rule "TST-002" {
+  category pricing
+  title tr "T" en "T"
+  basis "B"
+  version "SUT-2025.01" { severity error }
+  check each line in lines {
+    when line.quantity == "1"
+      report expected "1"
+    when line.code
+      report expected "2"
+    when line.date + line.code > 3
+      report expected "3"
+  }
+  reason tr "R {expected}" en "R {expected}"
+  fix RemoveLine tr "F" en "F"
+}

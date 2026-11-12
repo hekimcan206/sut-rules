@@ -1,0 +1,1 @@
+chained-comparison.rule:7:27: error SR010: Comparisons do not chain; use 'and' (a < b and b < c) or between().

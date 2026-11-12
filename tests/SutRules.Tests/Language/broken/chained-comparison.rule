@@ -1,0 +1,12 @@
+rule "TST-006" {
+  category pricing
+  title tr "T" en "T"
+  basis "B"
+  version "SUT-2025.01" { severity error }
+  check invoice {
+    when 1 < count(lines) < 5
+      report expected "x"
+  }
+  reason tr "R {expected}" en "R {expected}"
+  fix RemoveLine tr "F" en "F"
+}

@@ -1,0 +1,5 @@
+version-errors.rule:6:3: error SR207: Parameter 'limit' has no value in the first version block.
+version-errors.rule:7:3: error SR205: Version blocks must be in ascending SUT order; 'SUT-2025.01' comes after a later or equal version.
+version-errors.rule:8:3: error SR202: Unknown severity 'loud'; use info, warning or error.
+version-errors.rule:8:41: error SR208: 'undeclared' is not a declared parameter; declare it with 'param undeclared <type>'.
+version-errors.rule:9:3: error SR204: Unknown SUT version 'SUT-2027.01'. The catalog has: SUT-2025.01, SUT-2025.07, SUT-2026.01.

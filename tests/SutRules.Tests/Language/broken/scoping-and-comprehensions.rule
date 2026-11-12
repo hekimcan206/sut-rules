@@ -1,0 +1,15 @@
+rule "TST-007" {
+  category pricing
+  title tr "T" en "T"
+  basis "B"
+  version "SUT-2025.01" { severity error }
+  check each line in lines {
+    let line = 1
+    let n = count(lines)
+    let n = sum(l in lines: l.code)
+    when any(l in lines: l.quantity) and all(l in lines where l.no > 0)
+      report at invoice expected n
+  }
+  reason tr "R {expected}" en "R {expected}"
+  fix RemoveLine tr "F" en "F"
+}

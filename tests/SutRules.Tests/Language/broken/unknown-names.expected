@@ -1,0 +1,2 @@
+unknown-names.rule:7:13: error SR103: Unknown function 'procedur'. Did you mean 'procedure'?
+unknown-names.rule:8:14: error SR101: 'line' has no field 'cod'. Did you mean 'code'? Fields: no, code, date, quantity, unit_price, amount, doctor.

@@ -1,0 +1,8 @@
+structure.rule:1:1: error SR200: Rule id 'tst-8' must look like ABC-123.
+structure.rule:1:1: error SR201: Unknown category 'billing'. Known: structural, pricing, demographic, clinical, frequency, package, provision, administrative.
+structure.rule:1:1: error SR200: The rule has no 'title'.
+structure.rule:1:1: error SR200: The rule has no 'basis'.
+structure.rule:1:1: error SR200: The rule has no 'reason'.
+structure.rule:1:1: error SR200: The rule has no 'fix'.
+structure.rule:3:3: error SR213: The first version block cannot retire the rule; start the rule at the version it comes into force.
+structure.rule:1:1: error SR200: The rule has no 'check' block, so it can never report anything.

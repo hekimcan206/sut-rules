@@ -241,59 +241,59 @@ internal sealed class ExpressionCompiler
         {
             case "==":
             case "!=":
-            {
-                if (DslType.Unify(lt, rt) is null)
                 {
-                    return Mismatch(b, lt, rt);
-                }
+                    if (DslType.Unify(lt, rt) is null)
+                    {
+                        return Mismatch(b, lt, rt);
+                    }
 
-                var negate = b.Operator == "!=";
-                return new Typed(DslType.Bool, f => Values.Bool(Values.AreEqual(l(f), r(f)) != negate));
-            }
+                    var negate = b.Operator == "!=";
+                    return new Typed(DslType.Bool, f => Values.Bool(Values.AreEqual(l(f), r(f)) != negate));
+                }
 
             case "<":
             case "<=":
             case ">":
             case ">=":
-            {
-                var common = DslType.Unify(lt, rt);
-                if (common is null || (!common.IsOrdered && common != DslType.Null))
                 {
-                    return Mismatch(b, lt, rt);
+                    var common = DslType.Unify(lt, rt);
+                    if (common is null || (!common.IsOrdered && common != DslType.Null))
+                    {
+                        return Mismatch(b, lt, rt);
+                    }
+
+                    Func<int, bool> test = b.Operator switch
+                    {
+                        "<" => c => c < 0,
+                        "<=" => c => c <= 0,
+                        ">" => c => c > 0,
+                        _ => c => c >= 0,
+                    };
+
+                    // The two most common shapes get allocation-free fast paths; everything else goes through Compare.
+                    if (lt == DslType.Int && rt == DslType.Int)
+                    {
+                        return new Typed(DslType.Bool, f => l(f) is int x && r(f) is int y ? Values.Bool(test(x.CompareTo(y))) : Values.False);
+                    }
+
+                    if (lt == DslType.Date && rt == DslType.Date)
+                    {
+                        return new Typed(DslType.Bool, f => l(f) is DateOnly x && r(f) is DateOnly y ? Values.Bool(test(x.CompareTo(y))) : Values.False);
+                    }
+
+                    return new Typed(DslType.Bool, f => Values.Compare(l(f), r(f)) is { } c ? Values.Bool(test(c)) : Values.False);
                 }
-
-                Func<int, bool> test = b.Operator switch
-                {
-                    "<" => c => c < 0,
-                    "<=" => c => c <= 0,
-                    ">" => c => c > 0,
-                    _ => c => c >= 0,
-                };
-
-                // The two most common shapes get allocation-free fast paths; everything else goes through Compare.
-                if (lt == DslType.Int && rt == DslType.Int)
-                {
-                    return new Typed(DslType.Bool, f => l(f) is int x && r(f) is int y ? Values.Bool(test(x.CompareTo(y))) : Values.False);
-                }
-
-                if (lt == DslType.Date && rt == DslType.Date)
-                {
-                    return new Typed(DslType.Bool, f => l(f) is DateOnly x && r(f) is DateOnly y ? Values.Bool(test(x.CompareTo(y))) : Values.False);
-                }
-
-                return new Typed(DslType.Bool, f => Values.Compare(l(f), r(f)) is { } c ? Values.Bool(test(c)) : Values.False);
-            }
 
             case "??":
-            {
-                var common = DslType.Unify(lt, rt);
-                if (common is null)
                 {
-                    return Mismatch(b, lt, rt);
-                }
+                    var common = DslType.Unify(lt, rt);
+                    if (common is null)
+                    {
+                        return Mismatch(b, lt, rt);
+                    }
 
-                return new Typed(common, f => l(f) ?? r(f));
-            }
+                    return new Typed(common, f => l(f) ?? r(f));
+                }
 
             case "+":
                 return Plus(b, left, right);
@@ -570,105 +570,105 @@ internal sealed class ExpressionCompiler
 
             case "any":
             case "all":
-            {
-                if (projection is not null && projection.Type != DslType.Bool)
                 {
-                    Error(c.Pos, "SR105", $"The ': condition' of {c.Function}() must be a bool, not {projection.Type}.");
-                    return Failed();
-                }
-
-                if (c.Function == "all" && projection is null)
-                {
-                    Error(c.Pos, "SR107", "all() needs a condition: all(x in xs: condition).");
-                    return Failed();
-                }
-
-                var test = projection?.Eval;
-                var all = c.Function == "all";
-                return new Typed(DslType.Bool, f =>
-                {
-                    var items = f.Slots;
-                    if (source(f) is not IReadOnlyList<object?> list)
+                    if (projection is not null && projection.Type != DslType.Bool)
                     {
+                        Error(c.Pos, "SR105", $"The ': condition' of {c.Function}() must be a bool, not {projection.Type}.");
+                        return Failed();
+                    }
+
+                    if (c.Function == "all" && projection is null)
+                    {
+                        Error(c.Pos, "SR107", "all() needs a condition: all(x in xs: condition).");
+                        return Failed();
+                    }
+
+                    var test = projection?.Eval;
+                    var all = c.Function == "all";
+                    return new Typed(DslType.Bool, f =>
+                    {
+                        var items = f.Slots;
+                        if (source(f) is not IReadOnlyList<object?> list)
+                        {
+                            return Values.Bool(all);
+                        }
+
+                        for (var k = 0; k < list.Count; k++)
+                        {
+                            items[slot] = list[k];
+                            if (filter is not null && !Values.IsTrue(filter(f)))
+                            {
+                                continue;
+                            }
+
+                            var ok = test is null || Values.IsTrue(test(f));
+                            if (ok != all)
+                            {
+                                return Values.Bool(!all);
+                            }
+                        }
+
                         return Values.Bool(all);
-                    }
-
-                    for (var k = 0; k < list.Count; k++)
-                    {
-                        items[slot] = list[k];
-                        if (filter is not null && !Values.IsTrue(filter(f)))
-                        {
-                            continue;
-                        }
-
-                        var ok = test is null || Values.IsTrue(test(f));
-                        if (ok != all)
-                        {
-                            return Values.Bool(!all);
-                        }
-                    }
-
-                    return Values.Bool(all);
-                });
-            }
+                    });
+                }
 
             case "sum":
-            {
-                var valueType = projection?.Type ?? element;
-                if (!valueType.IsNumeric)
                 {
-                    Error(c.Pos, "SR107", $"sum() needs numbers, not {valueType}; add ': <number>' to choose what to add up.");
-                    return Failed();
-                }
+                    var valueType = projection?.Type ?? element;
+                    if (!valueType.IsNumeric)
+                    {
+                        Error(c.Pos, "SR107", $"sum() needs numbers, not {valueType}; add ': <number>' to choose what to add up.");
+                        return Failed();
+                    }
 
-                var value = projection?.Eval ?? (f => f.Slots[slot]);
-                if (valueType == DslType.Int)
-                {
-                    return new Typed(DslType.Int, f => Values.Int(SumInt(f, source, slot, filter, value)));
-                }
+                    var value = projection?.Eval ?? (f => f.Slots[slot]);
+                    if (valueType == DslType.Int)
+                    {
+                        return new Typed(DslType.Int, f => Values.Int(SumInt(f, source, slot, filter, value)));
+                    }
 
-                return new Typed(DslType.Decimal, f => SumDecimal(f, source, slot, filter, value));
-            }
+                    return new Typed(DslType.Decimal, f => SumDecimal(f, source, slot, filter, value));
+                }
 
             case "min":
             case "max":
-            {
-                var valueType = projection?.Type ?? element;
-                if (!valueType.IsOrdered)
                 {
-                    Error(c.Pos, "SR107", $"{c.Function}() needs numbers, strings or dates, not {valueType}.");
-                    return Failed();
+                    var valueType = projection?.Type ?? element;
+                    if (!valueType.IsOrdered)
+                    {
+                        Error(c.Pos, "SR107", $"{c.Function}() needs numbers, strings or dates, not {valueType}.");
+                        return Failed();
+                    }
+
+                    var value = projection?.Eval ?? (f => f.Slots[slot]);
+                    var sign = c.Function == "min" ? -1 : 1;
+                    // Empty input (or only nulls) gives null, which lets "least(a, b)" and "x > max(...)" fall through.
+                    return new Typed(valueType, f => Extremum(f, source, slot, filter, value, sign));
                 }
 
-                var value = projection?.Eval ?? (f => f.Slots[slot]);
-                var sign = c.Function == "min" ? -1 : 1;
-                // Empty input (or only nulls) gives null, which lets "least(a, b)" and "x > max(...)" fall through.
-                return new Typed(valueType, f => Extremum(f, source, slot, filter, value, sign));
-            }
-
             case "first":
-            {
-                var value = projection?.Eval;
-                return new Typed(projection?.Type ?? element, f =>
                 {
-                    if (source(f) is not IReadOnlyList<object?> list)
+                    var value = projection?.Eval;
+                    return new Typed(projection?.Type ?? element, f =>
                     {
-                        return null;
-                    }
-
-                    for (var k = 0; k < list.Count; k++)
-                    {
-                        var item = list[k];
-                        f.Slots[slot] = item;
-                        if (filter is null || Values.IsTrue(filter(f)))
+                        if (source(f) is not IReadOnlyList<object?> list)
                         {
-                            return value is null ? item : value(f);
+                            return null;
                         }
-                    }
 
-                    return null;
-                });
-            }
+                        for (var k = 0; k < list.Count; k++)
+                        {
+                            var item = list[k];
+                            f.Slots[slot] = item;
+                            if (filter is null || Values.IsTrue(filter(f)))
+                            {
+                                return value is null ? item : value(f);
+                            }
+                        }
+
+                        return null;
+                    });
+                }
 
             default:
                 throw new ArgumentOutOfRangeException(nameof(c), c.Function, null);
@@ -849,25 +849,25 @@ internal sealed class ExpressionCompiler
             case "greatest":
                 return Extremum(c, args, e);
             case "between":
-            {
-                if (!Arity(c, args, 3))
                 {
-                    return Failed();
-                }
+                    if (!Arity(c, args, 3))
+                    {
+                        return Failed();
+                    }
 
-                var common = DslType.Unify(DslType.Unify(args[0].Type, args[1].Type) ?? ErrorType, args[2].Type);
-                if (common is null || common == ErrorType || !common.IsOrdered)
-                {
-                    Error(c.Pos, "SR102", $"between() needs three values of one ordered type, not {args[0].Type}, {args[1].Type}, {args[2].Type}.");
-                    return Failed();
-                }
+                    var common = DslType.Unify(DslType.Unify(args[0].Type, args[1].Type) ?? ErrorType, args[2].Type);
+                    if (common is null || common == ErrorType || !common.IsOrdered)
+                    {
+                        Error(c.Pos, "SR102", $"between() needs three values of one ordered type, not {args[0].Type}, {args[1].Type}, {args[2].Type}.");
+                        return Failed();
+                    }
 
-                return new Typed(DslType.Bool, f =>
-                {
-                    var x = e[0](f);
-                    return Values.Bool(Values.Compare(x, e[1](f)) >= 0 && Values.Compare(x, e[2](f)) <= 0);
-                });
-            }
+                    return new Typed(DslType.Bool, f =>
+                    {
+                        var x = e[0](f);
+                        return Values.Bool(Values.Compare(x, e[1](f)) >= 0 && Values.Compare(x, e[2](f)) <= 0);
+                    });
+                }
 
             case "procedure":
                 return Arity(c, args, 1) && Expect(c, args, 0, IsString, "a SUT code string")

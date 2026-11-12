@@ -870,7 +870,7 @@ internal sealed class ExpressionCompiler
             type = unified;
         }
 
-        if (!type.IsOrdered)
+        if (!type.IsOrdered && type != DslType.Null)
         {
             Error(c.Pos, "SR102", $"{c.Function}() needs numbers, strings or dates, not {type}.");
             return Failed();
@@ -932,7 +932,7 @@ internal sealed class ExpressionCompiler
             // engine runs in linear time, so no pattern can hang the engine (ReDoS); the timeout is a second fence.
             regex = new Regex(pattern, RegexOptions.CultureInvariant | RegexOptions.NonBacktracking, RegexTimeout);
         }
-        catch (ArgumentException ex)
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException)
         {
             Error(c.Arguments[1].Pos, "SR106", $"Invalid or unsupported regular expression: {ex.Message}");
             return Failed();

@@ -1,5 +1,6 @@
 <Solution>
   <Folder Name="/src/">
+    <Project Path="src/SutRules.Api/SutRules.Api.csproj" />
     <Project Path="src/SutRules.Cli/SutRules.Cli.csproj" />
     <Project Path="src/SutRules.Core/SutRules.Core.csproj" />
   </Folder>

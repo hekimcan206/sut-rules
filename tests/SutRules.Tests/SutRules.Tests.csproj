@@ -10,11 +10,19 @@
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="AwesomeAssertions" />
     <PackageReference Include="FsCheck.Xunit.v3" />
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\SutRules.Core\SutRules.Core.csproj" />
+    <ProjectReference Include="..\..\src\SutRules.Api\SutRules.Api.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test classes run one after another: the machine and CI runners are shared, and the reload tests poll a
+         directory on a timer. -->
+    <Content Include="xunit.runner.json" CopyToOutputDirectory="PreserveNewest" />
   </ItemGroup>
 
   <ItemGroup>

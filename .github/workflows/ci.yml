@@ -1,0 +1,184 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: true
+  DOTNET_CLI_TELEMETRY_OPTOUT: true
+  NUGET_PACKAGES: ${{ github.workspace }}/.nuget/packages
+
+jobs:
+  build-test:
+    name: build & test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - uses: actions/cache@v6
+        with:
+          path: ${{ env.NUGET_PACKAGES }}
+          key: nuget-${{ runner.os }}-${{ hashFiles('Directory.Packages.props', '**/*.csproj', 'global.json') }}
+          restore-keys: nuget-${{ runner.os }}-
+
+      - name: Restore
+        run: dotnet restore
+
+      # Package versions are pinned and updated by hand, so a known vulnerability in any direct or transitive
+      # package fails the build. Fix it with a pinned upgrade in Directory.Packages.props.
+      - name: Audit for vulnerable packages
+        run: |
+          set -o pipefail
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee vulnerable-packages.txt
+          if grep -q "has the following vulnerable packages" vulnerable-packages.txt; then
+            echo "::error::Known-vulnerable NuGet packages found (see the list above)"
+            exit 1
+          fi
+
+      - name: Format check
+        run: dotnet format --verify-no-changes --no-restore
+
+      - name: Build (warnings are errors)
+        run: dotnet build --no-restore --configuration Release
+
+      # The rule author's loop, exactly as CONTRIBUTING describes it: every rule compiles, every golden case passes,
+      # every rule and version block has a firing case.
+      - name: Lint rules
+        run: dotnet run --no-build --configuration Release --project src/SutRules.Cli -- lint
+
+      - name: Golden cases and coverage contract
+        run: dotnet run --no-build --configuration Release --project src/SutRules.Cli -- test
+
+      # Unit, golden, parity (2,000 invoices vs medula-precheck), property, API and hot-reload tests. No containers.
+      - name: Test
+        run: >
+          dotnet test --no-build --configuration Release
+          --coverage --coverage-output-format cobertura
+          --results-directory "${{ github.workspace }}/TestResults"
+
+      - name: Coverage summary
+        if: always()
+        uses: danielpalme/ReportGenerator-GitHub-Action@5.5.12
+        with:
+          reports: TestResults/**/*.cobertura.xml
+          targetdir: coverage
+          reporttypes: MarkdownSummaryGithub
+          assemblyfilters: "-*Tests*;-SutRules.Benchmarks"
+          filefilters: "-*/obj/*"
+
+      - name: Publish coverage to job summary
+        if: always()
+        run: |
+          if [ -f coverage/SummaryGithub.md ]; then
+            cat coverage/SummaryGithub.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No coverage report produced."
+          fi
+
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: test-results
+          path: TestResults/
+          retention-days: 7
+
+  container:
+    name: container image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: docker/setup-buildx-action@v4
+
+      - name: Build image
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: false
+          load: true
+          tags: sut-rules:ci
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,mode=max,scope=api
+
+      - name: Image runs as non-root
+        run: |
+          user=$(docker image inspect sut-rules:ci --format '{{.Config.User}}')
+          echo "user: ${user}"
+          test -n "${user}" && test "${user}" != "0" && test "${user}" != "root"
+
+  compose-demo:
+    name: docker compose demo
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      # The README promises `docker compose up` runs the demo with zero manual steps and that rule edits are picked
+      # up live; this job keeps both true.
+      - name: Start the stack
+        run: docker compose up -d --build
+
+      - name: Wait until ready
+        run: |
+          for i in $(seq 1 60); do
+            curl -fsS http://127.0.0.1:18422/health/ready && exit 0
+            sleep 1
+          done
+          exit 1
+
+      - name: The sample batch gives the documented verdict
+        run: |
+          curl -fsS -D headers.txt -X POST http://127.0.0.1:18422/api/v1/check \
+            -H 'content-type: application/json' --data-binary @docs/samples/invoices.json | tee report.json
+          grep -qi '^x-rule-bundle: [0-9a-f]\{64\}' headers.txt
+          grep -q '"invoices": 40' report.json
+          grep -q '"rejected": 14' report.json
+          grep -q '"amountAtRisk": 43765.80' report.json
+
+      - name: An edited rule is picked up without a restart
+        run: |
+          before=$(curl -fsS http://127.0.0.1:18422/api/v1/ruleset | grep -o '"hash": "[0-9a-f]*"')
+          sed -i 's/max_lag_days = 45/max_lag_days = 30/' rules/ADM-001.rule
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:18422/api/v1/ruleset > ruleset.json
+            grep -q '"generation": 2' ruleset.json && break
+            sleep 1
+          done
+          grep -q '"generation": 2' ruleset.json
+          test "$(grep -o '"hash": "[0-9a-f]*"' ruleset.json)" != "${before}"
+          curl -fsS 'http://127.0.0.1:18422/api/v1/rules?date=2026-03-01' | grep -q '"max_lag_days": "30"'
+
+      - name: A broken rule is rejected and the last good bundle keeps serving
+        run: |
+          echo 'rule "ZZZ-001" { category nope }' > rules/ZZZ-001.rule
+          for i in $(seq 1 30); do
+            curl -fsS http://127.0.0.1:18422/api/v1/ruleset > ruleset.json
+            grep -q '"lastReloadFailure": {' ruleset.json && break
+            sleep 1
+          done
+          cat ruleset.json
+          grep -q 'SR201' ruleset.json
+          grep -q '"generation": 2' ruleset.json
+          curl -fsS http://127.0.0.1:18422/health/ready | grep -q Degraded
+          curl -fsS -X POST http://127.0.0.1:18422/api/v1/check -H 'content-type: application/json' \
+            --data-binary @docs/samples/invoices.json | grep -q '"rejected": 14'
+
+      - name: Logs on failure
+        if: failure()
+        run: docker compose logs

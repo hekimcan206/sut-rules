@@ -361,9 +361,9 @@ internal sealed class ExpressionCompiler
             var found = false;
             if (l(f) is { } value && r(f) is IReadOnlyList<object?> items)
             {
-                foreach (var item in items)
+                for (var k = 0; k < items.Count; k++)
                 {
-                    if (Values.AreEqual(value, item))
+                    if (Values.AreEqual(value, items[k]))
                     {
                         found = true;
                         break;
@@ -566,12 +566,7 @@ internal sealed class ExpressionCompiler
                     return Failed();
                 }
 
-                return new Typed(DslType.Int, f =>
-                {
-                    var n = 0;
-                    Each(f, source, slot, filter, _ => n++);
-                    return Values.Int(n);
-                });
+                return new Typed(DslType.Int, f => Values.Int(Count(f, source, slot, filter)));
 
             case "any":
             case "all":
@@ -598,9 +593,9 @@ internal sealed class ExpressionCompiler
                         return Values.Bool(all);
                     }
 
-                    foreach (var item in list)
+                    for (var k = 0; k < list.Count; k++)
                     {
-                        items[slot] = item;
+                        items[slot] = list[k];
                         if (filter is not null && !Values.IsTrue(filter(f)))
                         {
                             continue;
@@ -629,32 +624,10 @@ internal sealed class ExpressionCompiler
                 var value = projection?.Eval ?? (f => f.Slots[slot]);
                 if (valueType == DslType.Int)
                 {
-                    return new Typed(DslType.Int, f =>
-                    {
-                        var total = 0;
-                        Each(f, source, slot, filter, fr =>
-                        {
-                            if (value(fr) is int v)
-                            {
-                                total = checked(total + v);
-                            }
-                        });
-                        return Values.Int(total);
-                    });
+                    return new Typed(DslType.Int, f => Values.Int(SumInt(f, source, slot, filter, value)));
                 }
 
-                return new Typed(DslType.Decimal, f =>
-                {
-                    var total = 0m;
-                    Each(f, source, slot, filter, fr =>
-                    {
-                        if (value(fr) is { } v)
-                        {
-                            total += Values.ToDecimal(v);
-                        }
-                    });
-                    return total;
-                });
+                return new Typed(DslType.Decimal, f => SumDecimal(f, source, slot, filter, value));
             }
 
             case "min":
@@ -670,19 +643,7 @@ internal sealed class ExpressionCompiler
                 var value = projection?.Eval ?? (f => f.Slots[slot]);
                 var sign = c.Function == "min" ? -1 : 1;
                 // Empty input (or only nulls) gives null, which lets "least(a, b)" and "x > max(...)" fall through.
-                return new Typed(valueType, f =>
-                {
-                    object? best = null;
-                    Each(f, source, slot, filter, fr =>
-                    {
-                        var v = value(fr);
-                        if (v is not null && (best is null || Math.Sign(Values.Compare(v, best)!.Value) == sign))
-                        {
-                            best = v;
-                        }
-                    });
-                    return best;
-                });
+                return new Typed(valueType, f => Extremum(f, source, slot, filter, value, sign));
             }
 
             case "first":
@@ -695,8 +656,9 @@ internal sealed class ExpressionCompiler
                         return null;
                     }
 
-                    foreach (var item in list)
+                    for (var k = 0; k < list.Count; k++)
                     {
+                        var item = list[k];
                         f.Slots[slot] = item;
                         if (filter is null || Values.IsTrue(filter(f)))
                         {
@@ -713,22 +675,92 @@ internal sealed class ExpressionCompiler
         }
     }
 
-    private static void Each(Frame f, Eval source, int slot, Eval? filter, Action<Frame> body)
+    // Aggregation loops are static methods over indexes, not lambdas over foreach: a closure or a boxed interface
+    // enumerator per evaluation was the largest allocation source in the engine (see docs/benchmarks.md).
+    private static int Count(Frame f, Eval source, int slot, Eval? filter)
     {
         if (source(f) is not IReadOnlyList<object?> list)
         {
-            return;
+            return 0;
         }
 
-        var slots = f.Slots;
-        foreach (var item in list)
+        var n = 0;
+        for (var k = 0; k < list.Count; k++)
         {
-            slots[slot] = item;
+            f.Slots[slot] = list[k];
             if (filter is null || Values.IsTrue(filter(f)))
             {
-                body(f);
+                n++;
             }
         }
+
+        return n;
+    }
+
+    private static int SumInt(Frame f, Eval source, int slot, Eval? filter, Eval value)
+    {
+        if (source(f) is not IReadOnlyList<object?> list)
+        {
+            return 0;
+        }
+
+        var total = 0;
+        for (var k = 0; k < list.Count; k++)
+        {
+            f.Slots[slot] = list[k];
+            if ((filter is null || Values.IsTrue(filter(f))) && value(f) is int v)
+            {
+                total = checked(total + v);
+            }
+        }
+
+        return total;
+    }
+
+    private static decimal SumDecimal(Frame f, Eval source, int slot, Eval? filter, Eval value)
+    {
+        if (source(f) is not IReadOnlyList<object?> list)
+        {
+            return 0m;
+        }
+
+        var total = 0m;
+        for (var k = 0; k < list.Count; k++)
+        {
+            f.Slots[slot] = list[k];
+            if ((filter is null || Values.IsTrue(filter(f))) && value(f) is { } v)
+            {
+                total += Values.ToDecimal(v);
+            }
+        }
+
+        return total;
+    }
+
+    private static object? Extremum(Frame f, Eval source, int slot, Eval? filter, Eval value, int sign)
+    {
+        if (source(f) is not IReadOnlyList<object?> list)
+        {
+            return null;
+        }
+
+        object? best = null;
+        for (var k = 0; k < list.Count; k++)
+        {
+            f.Slots[slot] = list[k];
+            if (filter is not null && !Values.IsTrue(filter(f)))
+            {
+                continue;
+            }
+
+            var v = value(f);
+            if (v is not null && (best is null || Math.Sign(Values.Compare(v, best)!.Value) == sign))
+            {
+                best = v;
+            }
+        }
+
+        return best;
     }
 
     // ---- built-in functions -----------------------------------------------------------------------------------

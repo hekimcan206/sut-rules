@@ -121,8 +121,9 @@ public sealed class RuleEngine
                 continue;
             }
 
-            foreach (var item in items)
+            for (var k = 0; k < items.Count; k++)
             {
+                var item = items[k];
                 frame.Slots[check.Slot] = item;
                 RunStatements(rule, state, check, frame, check.AttachItem ? item as ServiceLine : null, findings);
             }

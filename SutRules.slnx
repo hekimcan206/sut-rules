@@ -1,4 +1,7 @@
 <Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/SutRules.Benchmarks/SutRules.Benchmarks.csproj" />
+  </Folder>
   <Folder Name="/src/">
     <Project Path="src/SutRules.Api/SutRules.Api.csproj" />
     <Project Path="src/SutRules.Cli/SutRules.Cli.csproj" />
